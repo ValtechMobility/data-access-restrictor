@@ -1,0 +1,34 @@
+version: '3.8'
+services:
+  rate-limiter:
+    build:
+      context: .
+      dockerfile: access-restrictor/Dockerfile
+    restart: on-failure
+    ports:
+      - 8080:8080
+      - 8081:8081
+    environment: 
+      - LD_PRELOAD=/usr/local/lib/faketime/libfaketimeMT.so.1
+      - FAKETIME_NO_CACHE=1
+      - FAKETIME_TIMESTAMP_FILE=/faketime
+    volumes:
+      - type: bind
+        source: ./build/state
+        target: /state
+      - type: bind
+        source: ./build/config
+        target: /config
+      - type: bind
+        source: ./build/faketime/libfaketimeMT.so.1
+        target: /usr/local/lib/faketime/libfaketimeMT.so.1
+      - type: bind
+        source: ./build/faketime/timestamp
+        target: /faketime
+        read_only: true
+
+  target:
+    image: rodolpheche/wiremock
+    ports:
+      - 8082:8080
+    stop_grace_period: 1s
